@@ -33,7 +33,8 @@ class DateTimeCommon
      */
     public function __construct()
     {
-        $this->config = Config::default(new DateTimeDefaultConfiguration)::get('Project');
+        $this->config = Config::default('ZN\DateTime\DateTimeDefaultConfiguration')
+                              ::get('Project');
 
         setlocale(LC_ALL, $this->config['locale']['charset'], $this->config['locale']['language']);
     }
