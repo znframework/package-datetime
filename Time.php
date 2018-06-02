@@ -12,6 +12,60 @@
 class Time extends DateTimeCommon implements DateTimeCommonInterface
 {
     /**
+     * Magic call
+     * 
+     * @param string $method
+     * @param array  $parameters
+     * 
+     * @return mixed
+     */
+    public function __call($method, $parameters)
+    {
+        $parts = $this->splitUpperCase($method);
+        
+        $methodType = $parts[0] ?? NULL;
+
+        if( in_array($methodType, ['next', 'prev']) )
+        {
+            return $this->$methodType($parameters[0] ?? NULL, ltrim($method, $methodType));
+        }
+
+        return parent::__call($method, $parameters);
+    }
+
+    /**
+     * Date check
+     * 
+     * @param string $time
+     * 
+     * @return bool
+     */
+    public function check(String $time) : Bool
+    {
+        $timeEx    = explode(':', $this->convert($time, '{hour}:{minute}:{second}'));
+        $validTime = implode('/', $timeEx);
+        
+        if( $time !== $validTime && $validTime === '01/00/00' )
+        {
+            return false;
+        }
+
+        return $this->checktime($timeEx[0] ?? NULL, $timeEx[1] ?? NULL, $timeEx[2] ?? NULL);
+    }
+
+    /**
+     * Is past
+     * 
+     * @string $time
+     * 
+     * @return bool
+     */
+    public function isPast(String $time) : Bool
+    {
+        return $this->compare($time, '<', $this->set('{hour}:{minute}:{second}'));
+    }
+
+    /**
      * Gives the active time information.
      * 
      * @param string $clock = '%H:%M:%S'
@@ -47,131 +101,11 @@ class Time extends DateTimeCommon implements DateTimeCommonInterface
     }
 
     /**
-     * Get next hour.
-     * 
-     * 5.7.6[added]
-     * 
-     * @param string $next = 1
-     * 
-     * @return string
-     */
-    public function nextHour(String $next = '1') : String
-    {
-        return $this->next($next, 'hour');
-    }
-
-    /**
-     * Get prev hour.
-     * 
-     * 5.7.6[added]
-     * 
-     * @param string $next = 1
-     * 
-     * @return string
-     */
-    public function prevHour(String $next = '1') : String
-    {
-        return $this->prev($next, 'hour');
-    }
-
-    /**
-     * Get current hour.
-     * 
-     * 5.7.6[added]
-     * 
-     * @return string
-     */
-    public function currentHour() : String
-    {
-        return $this->set('{hour}');
-    }
-
-    /**
-     * Get next minute.
-     * 
-     * 5.7.6[added]
-     * 
-     * @param string $next = 1
-     * 
-     * @return string
-     */
-    public function nextMinute(String $next = '1') : String
-    {
-        return $this->next($next, 'minute');
-    }
-
-    /**
-     * Get prev minute.
-     * 
-     * 5.7.6[added]
-     * 
-     * @param string $next = 1
-     * 
-     * @return string
-     */
-    public function prevMinute(String $next = '1') : String
-    {
-        return $this->prev($next, 'minute');
-    }
-
-    /**
-     * Get current minute.
-     * 
-     * 5.7.6[added]
-     * 
-     * @return string
-     */
-    public function currentMinute() : String
-    {
-        return $this->set('{minute}');
-    }
-
-    /**
-     * Get next second.
-     * 
-     * 5.7.6[added]
-     * 
-     * @param string $next = 1
-     * 
-     * @return string
-     */
-    public function nextSecond(String $next = '1') : String
-    {
-        return $this->next($next, 'second');
-    }
-
-    /**
-     * Get prev second.
-     * 
-     * 5.7.6[added]
-     * 
-     * @param string $next = 1
-     * 
-     * @return string
-     */
-    public function prevSecond(String $next = '1') : String
-    {
-        return $this->prev($next, 'second');
-    }
-
-    /**
-     * Get current second.
-     * 
-     * 5.7.6[added]
-     * 
-     * @return string
-     */
-    public function currentSecond() : String
-    {
-        return $this->set('{second}');
-    }
-
-    /**
      * Protected next
      */
-    public function next(String $next = '1', $type = 'hour', $signal = '+') : String
+    protected function next(String $time = NULL, $type = 'hour', $signal = '+') : String
     {
-        $calculate = $this->calculate($this->current(), $signal . $next . $type);
+        $calculate = $this->calculate($time ?? $this->current(), $signal . '1' . $type);
 
         return $this->convert($calculate, '{'.$type.'}');
     }
@@ -179,8 +113,27 @@ class Time extends DateTimeCommon implements DateTimeCommonInterface
     /**
      * Protected prev
      */
-    public function prev(String $next = '1', $type = 'hour') : String
+    protected function prev(String $time = NULL, $type = 'hour') : String
     {
-        return $this->next($next, $type, '-');
+        return $this->next($time, $type, '-');
     }
+
+    /**
+     * Protected checktime
+     */
+    protected function checktime($hour, $min, $sec) 
+    {
+        if
+        (
+            ($hour < 0 || $hour > 23 || ! is_numeric($hour)) ||
+            ($min  < 0 || $min  > 59 || ! is_numeric($min))  ||
+            ($sec  < 0 || $sec  > 59 || ! is_numeric($sec)) 
+        ) 
+        {
+            return false;
+        }
+
+        return true;
+   }
+   
 }
