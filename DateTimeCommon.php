@@ -78,7 +78,7 @@ class DateTimeCommon
             return $this->set('{'.ltrim($method, $methodType).'}');
         }
 
-        return false;
+        return false; // @codeCoverageIgnore
     }
 
     /**
@@ -215,6 +215,25 @@ class DateTimeCommon
 
         $chars  = Properties::${$config};
 
+        if( $config === 'setDateFormatChars' )
+        {
+            $chars['{dayInYear}|{yearDayNumber0}|{yearDayNum0}|{YDN0}'] = strftime('%j');
+            $chars['{century-}|{cen-}']                                 = strftime('%C');
+            $chars['{century}|{cen}']                                   = strftime('%C') + 1;
+        }
+        else
+        {
+            $chars['{dayInYear-}|{yearDayNumber}|{yearDayNum}|{YDN}']   = date('z');
+            $chars['{dayCountInMonth}|{totalDays}|{TD}']                = date('t');
+            $chars['{monthInYear-}|{monthNumber}|{monNum}|{MN}']        = date('n');
+            $chars['{century}|{cen}']                                   = strftime('%C') + 1;
+            $chars['{isLeapYear}|{ILY}']                                = date('L');
+            $chars['{msecond}|{microSecond}|{micSec}|{MS}']             = date('u');
+            $chars['{iso}']                                             = date('c');
+            $chars['{rfc}']                                             = date('r');
+            $chars['{unix}']                                            = date('U');
+        }
+
         $chars  = Datatype::multikey($chars);
 
         return str_ireplace(array_keys($chars), array_values($chars), $change);
@@ -308,6 +327,6 @@ class DateTimeCommon
             return Rounder::$round($return);
         }
         
-        return Rounder::average($return);
+        return Rounder::average($return); // @codeCoverageIgnore
     }
 }
